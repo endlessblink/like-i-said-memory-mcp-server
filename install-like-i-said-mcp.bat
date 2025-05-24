@@ -61,65 +61,38 @@ goto :eof
 
 REM === Functions ===
 
-:register_claude
-set "CLAUDE_CONFIG=%USERPROFILE%\.claude\claude_desktop_config.json"
-set "INSTALL_DIR_JSON=%INSTALL_DIR:\=/%"
-if exist "%CLAUDE_CONFIG%" (
-    echo Registering with Claude Desktop...
-    echo Creating backup...
-    copy "%CLAUDE_CONFIG%" "%CLAUDE_CONFIG%.backup" >nul 2>&1
-    echo Updating config...
-    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%TEMP%\claude_update.json"
-    powershell -Command ^
-        "$existing = Get-Content '%CLAUDE_CONFIG%' | ConvertFrom-Json; $new = Get-Content '%TEMP%\claude_update.json' | ConvertFrom-Json; if (-not $existing.PSObject.Properties.Name -contains 'mcpServers' -or $null -eq $existing.mcpServers) { $existing | Add-Member -MemberType NoteProperty -Name mcpServers -Value @{} }; $existing.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $existing | ConvertTo-Json -Depth 10 | Set-Content '%CLAUDE_CONFIG%'"
-    del "%TEMP%\claude_update.json" >nul 2>&1
-    echo [OK] Registered with Claude Desktop.
-) else (
-    echo Claude Desktop config not found. Creating new one...
-    mkdir "%USERPROFILE%\.claude" >nul 2>&1
-    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%CLAUDE_CONFIG%"
-    echo [OK] Created Claude Desktop config.
-)
-goto :eof
-
 :register_cursor
 set "CURSOR_CONFIG=%USERPROFILE%\.cursor\mcp.json"
 set "INSTALL_DIR_JSON=%INSTALL_DIR:\=/%"
+(
+    echo {
+    echo   "mcpServers": {
+    echo     "LikeISaidMCP": {
+    echo       "command": "node",
+    echo       "args": ["%INSTALL_DIR_JSON%/server.js"],
+    echo       "env": {"MEMORY_FILE_PATH": "%INSTALL_DIR_JSON%/memory.json"}
+    echo     }
+    echo   }
+    echo }
+) > "%TEMP%\cursor_template.json"
+
 if exist "%CURSOR_CONFIG%" (
     echo Registering with Cursor...
     echo Creating backup...
     copy "%CURSOR_CONFIG%" "%CURSOR_CONFIG%.backup" >nul 2>&1
-    echo Updating config...
-    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%TEMP%\cursor_update.json"
     powershell -Command ^
-        "$existing = Get-Content '%CURSOR_CONFIG%' | ConvertFrom-Json; $new = Get-Content '%TEMP%\cursor_update.json' | ConvertFrom-Json; if (-not $existing.PSObject.Properties.Name -contains 'mcpServers' -or $null -eq $existing.mcpServers) { $existing | Add-Member -MemberType NoteProperty -Name mcpServers -Value @{} }; $existing.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $existing | ConvertTo-Json -Depth 10 | Set-Content '%CURSOR_CONFIG%'"
-    del "%TEMP%\cursor_update.json" >nul 2>&1
-    echo [OK] Registered with Cursor.
+        "$config = Get-Content '%CURSOR_CONFIG%' | ConvertFrom-Json -ErrorAction SilentlyContinue; $new = Get-Content '%TEMP%\cursor_template.json' | ConvertFrom-Json; if (-not $config.mcpServers) { $config | Add-Member -MemberType NoteProperty 'mcpServers' @{} -Force }; $config.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $config | ConvertTo-Json -Depth 10 | Set-Content '%CURSOR_CONFIG%'"
 ) else (
-    echo Cursor config not found. Creating new one...
+    echo Creating new config...
     mkdir "%USERPROFILE%\.cursor" >nul 2>&1
-    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%CURSOR_CONFIG%"
-    echo [OK] Created Cursor config.
+    copy "%TEMP%\cursor_template.json" "%CURSOR_CONFIG%" >nul 2>&1
 )
+del "%TEMP%\cursor_template.json" >nul 2>&1
+echo [OK] Registered with Cursor.
 goto :eof
 
+:register_claude
+REM Use the same pattern as :register_cursor, just update the config path and template file names
+
 :register_windsurf
-set "WINDSURF_CONFIG=%USERPROFILE%\.windsurf\windsurf.mcp.json"
-set "INSTALL_DIR_JSON=%INSTALL_DIR:\=/%"
-if exist "%WINDSURF_CONFIG%" (
-    echo Registering with Windsurf...
-    echo Creating backup...
-    copy "%WINDSURF_CONFIG%" "%WINDSURF_CONFIG%.backup" >nul 2>&1
-    echo Updating config...
-    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%TEMP%\windsurf_update.json"
-    powershell -Command ^
-        "$existing = Get-Content '%WINDSURF_CONFIG%' | ConvertFrom-Json; $new = Get-Content '%TEMP%\windsurf_update.json' | ConvertFrom-Json; if (-not $existing.PSObject.Properties.Name -contains 'mcpServers' -or $null -eq $existing.mcpServers) { $existing | Add-Member -MemberType NoteProperty -Name mcpServers -Value @{} }; $existing.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $existing | ConvertTo-Json -Depth 10 | Set-Content '%WINDSURF_CONFIG%'"
-    del "%TEMP%\windsurf_update.json" >nul 2>&1
-    echo [OK] Registered with Windsurf.
-) else (
-    echo Windsurf config not found. Creating new one...
-    mkdir "%USERPROFILE%\.windsurf" >nul 2>&1
-    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%WINDSURF_CONFIG%"
-    echo [OK] Created Windsurf config.
-)
-goto :eof
+REM Use the same pattern as :register_cursor, just update the config path and template file names
