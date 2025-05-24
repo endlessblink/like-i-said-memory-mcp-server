@@ -1,156 +1,125 @@
-#!/usr/bin/env node
+@echo off
+setlocal enabledelayedexpansion
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+REM === CONFIGURATION ===
+set "REPO_URL=https://github.com/endlessblink/like-i-said-memory-mcp-server.git"
+set "INSTALL_DIR=%~dp0like-i-said-mcp-server"
 
-// Use environment variable if set, otherwise default to local memory.json
-const DB_FILE = process.env.MEMORY_FILE_PATH || path.join(__dirname, 'memory.json');
+echo.
+echo ==== Like-I-said-mcp-server Installer ====
+echo.
 
-// Ensure the directory for the DB file exists
-const dbDir = path.dirname(DB_FILE);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
+REM === 1. Clone if not already present ===
+if exist "%INSTALL_DIR%\.git" (
+    echo Repo already exists at "%INSTALL_DIR%", skipping clone.
+) else (
+    echo Cloning repo to "%INSTALL_DIR%"...
+    git clone "%REPO_URL%" "%INSTALL_DIR%"
+    if errorlevel 1 (
+        echo Git clone failed. Exiting.
+        exit /b 1
+    )
+)
 
-// Create empty DB file if it doesn't exist
-if (!fs.existsSync(DB_FILE)) {
-  fs.writeFileSync(DB_FILE, '{}');
-  console.error(`Created new memory file at: ${DB_FILE}`);
-}
+cd /d "%INSTALL_DIR%"
 
-function readDB() {
-  try { 
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); 
-  }
-  catch { 
-    return {}; 
-  }
-}
-function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-}
+REM === 2. Install dependencies ===
+echo Installing dependencies...
+call npm install
+if errorlevel 1 (
+    echo npm install failed. Exiting.
+    exit /b 1
+)
 
-function sendResponse(id, result) {
-  const response = { jsonrpc: "2.0", id, result };
-  process.stdout.write(JSON.stringify(response) + '\n');
-}
-function sendError(id, code, message) {
-  const response = { jsonrpc: "2.0", id, error: { code, message } };
-  process.stdout.write(JSON.stringify(response) + '\n');
-}
+REM === 3. Ask user which client(s) to register with ===
+echo.
+set /p CLIENT=Which client do you want to register the MCP server with? (claude/cursor/windsurf/all/none) [none]: 
+if "%CLIENT%"=="" set CLIENT=none
 
-const handlers = {
-  "initialize": (id) => sendResponse(id, {
-    protocolVersion: "2024-11-05",
-    capabilities: { tools: { listChanged: false } },
-    serverInfo: { name: "like-i-said-memory", version: "1.0.0" }
-  }),
-  "tools/list": (id) => sendResponse(id, {
-    tools: [
-      {
-        name: "add_memory",
-        description: "Store a memory",
-        inputSchema: {
-          type: "object",
-          properties: { key: { type: "string" }, value: { type: "string" }, context: { type: "object" } },
-          required: ["key", "value"]
-        }
-      },
-      {
-        name: "get_memory",
-        description: "Retrieve a memory",
-        inputSchema: {
-          type: "object",
-          properties: { key: { type: "string" } },
-          required: ["key"]
-        }
-      },
-      {
-        name: "list_memories",
-        description: "List memory keys",
-        inputSchema: {
-          type: "object",
-          properties: { prefix: { type: "string" } }
-        }
-      },
-      {
-        name: "delete_memory",
-        description: "Delete a memory",
-        inputSchema: {
-          type: "object",
-          properties: { key: { type: "string" } },
-          required: ["key"]
-        }
-      }
-    ]
-  }),
-  "tools/call": (id, params) => {
-    if (!params || !params.name || !params.arguments) {
-      sendError(id, -32602, "Invalid params: missing name or arguments");
-      return;
-    }
-    const { name, arguments: args } = params;
-    try {
-      if (name === "add_memory") {
-        if (!args.key || !args.value) {
-          sendError(id, -32602, "Missing required parameters: key and value");
-          return;
-        }
-        const db = readDB();
-        db[args.key] = { value: args.value, context: args.context || {}, timestamp: new Date().toISOString() };
-        writeDB(db);
-        sendResponse(id, { content: [{ type: "text", text: `Stored: ${args.key}` }] });
-      } else if (name === "get_memory") {
-        if (!args.key) {
-          sendError(id, -32602, "Missing required parameter: key");
-          return;
-        }
-        const db = readDB();
-        sendResponse(id, { content: [{ type: "text", text: db[args.key] ? db[args.key].value : "Not found" }] });
-      } else if (name === "list_memories") {
-        const db = readDB();
-        const prefix = args.prefix || '';
-        const keys = Object.keys(db).filter(k => k.startsWith(prefix));
-        sendResponse(id, { content: [{ type: "text", text: keys.join(', ') }] });
-      } else if (name === "delete_memory") {
-        if (!args.key) {
-          sendError(id, -32602, "Missing required parameter: key");
-          return;
-        }
-        const db = readDB();
-        if (db[args.key]) {
-          delete db[args.key];
-          writeDB(db);
-          sendResponse(id, { content: [{ type: "text", text: `Deleted: ${args.key}` }] });
-        } else {
-          sendResponse(id, { content: [{ type: "text", text: "Not found" }] });
-        }
-      } else {
-        sendError(id, -32601, "Unknown tool");
-      }
-    } catch (e) {
-      sendError(id, -32603, e.message);
-    }
-  },
-  "resources/list": (id) => sendResponse(id, { resources: [] }),
-  "prompts/list": (id) => sendResponse(id, { prompts: [] })
-};
+REM === 4. Register with clients ===
+if /i "%CLIENT%"=="claude" (
+    call :register_claude
+) else if /i "%CLIENT%"=="cursor" (
+    call :register_cursor
+) else if /i "%CLIENT%"=="windsurf" (
+    call :register_windsurf
+) else if /i "%CLIENT%"=="all" (
+    call :register_claude
+    call :register_cursor
+    call :register_windsurf
+) else (
+    echo No client registration selected.
+)
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: false });
-rl.on('line', (line) => {
-  try {
-    const msg = JSON.parse(line.trim());
-    if (!msg.method || typeof msg.id === 'undefined') {
-      sendError(msg.id || 0, -32600, "Invalid Request");
-      return;
-    }
-    if (handlers[msg.method]) {
-      handlers[msg.method](msg.id, msg.params);
-    } else {
-      sendError(msg.id, -32601, "Method not found");
-    }
-  } catch (e) {
-    sendError(0, -32700, "Parse error");
-  }
-});
+echo.
+echo Done! To start the dashboard, run:
+echo cd "%INSTALL_DIR%"
+echo npm run dashboard
+echo npm run dev
+pause
+goto :eof
+
+REM === Functions ===
+
+:register_claude
+set "CLAUDE_CONFIG=%USERPROFILE%\.claude\claude_desktop_config.json"
+set "INSTALL_DIR_JSON=%INSTALL_DIR:\=/%"
+if exist "%CLAUDE_CONFIG%" (
+    echo Registering with Claude Desktop...
+    echo Creating backup...
+    copy "%CLAUDE_CONFIG%" "%CLAUDE_CONFIG%.backup" >nul 2>&1
+    echo Updating config...
+    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%TEMP%\claude_update.json"
+    powershell -Command ^
+        "$existing = Get-Content '%CLAUDE_CONFIG%' | ConvertFrom-Json; $new = Get-Content '%TEMP%\claude_update.json' | ConvertFrom-Json; if (-not $existing.PSObject.Properties.Name -contains 'mcpServers' -or $null -eq $existing.mcpServers) { $existing | Add-Member -MemberType NoteProperty -Name mcpServers -Value @{} }; $existing.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $existing | ConvertTo-Json -Depth 10 | Set-Content '%CLAUDE_CONFIG%'"
+    del "%TEMP%\claude_update.json" >nul 2>&1
+    echo [OK] Registered with Claude Desktop.
+) else (
+    echo Claude Desktop config not found. Creating new one...
+    mkdir "%USERPROFILE%\.claude" >nul 2>&1
+    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%CLAUDE_CONFIG%"
+    echo [OK] Created Claude Desktop config.
+)
+goto :eof
+
+:register_cursor
+set "CURSOR_CONFIG=%USERPROFILE%\.cursor\mcp.json"
+set "INSTALL_DIR_JSON=%INSTALL_DIR:\=/%"
+if exist "%CURSOR_CONFIG%" (
+    echo Registering with Cursor...
+    echo Creating backup...
+    copy "%CURSOR_CONFIG%" "%CURSOR_CONFIG%.backup" >nul 2>&1
+    echo Updating config...
+    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%TEMP%\cursor_update.json"
+    powershell -Command ^
+        "$existing = Get-Content '%CURSOR_CONFIG%' | ConvertFrom-Json; $new = Get-Content '%TEMP%\cursor_update.json' | ConvertFrom-Json; if (-not $existing.PSObject.Properties.Name -contains 'mcpServers' -or $null -eq $existing.mcpServers) { $existing | Add-Member -MemberType NoteProperty -Name mcpServers -Value @{} }; $existing.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $existing | ConvertTo-Json -Depth 10 | Set-Content '%CURSOR_CONFIG%'"
+    del "%TEMP%\cursor_update.json" >nul 2>&1
+    echo [OK] Registered with Cursor.
+) else (
+    echo Cursor config not found. Creating new one...
+    mkdir "%USERPROFILE%\.cursor" >nul 2>&1
+    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%CURSOR_CONFIG%"
+    echo [OK] Created Cursor config.
+)
+goto :eof
+
+:register_windsurf
+set "WINDSURF_CONFIG=%USERPROFILE%\.windsurf\windsurf.mcp.json"
+set "INSTALL_DIR_JSON=%INSTALL_DIR:\=/%"
+if exist "%WINDSURF_CONFIG%" (
+    echo Registering with Windsurf...
+    echo Creating backup...
+    copy "%WINDSURF_CONFIG%" "%WINDSURF_CONFIG%.backup" >nul 2>&1
+    echo Updating config...
+    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%TEMP%\windsurf_update.json"
+    powershell -Command ^
+        "$existing = Get-Content '%WINDSURF_CONFIG%' | ConvertFrom-Json; $new = Get-Content '%TEMP%\windsurf_update.json' | ConvertFrom-Json; if (-not $existing.PSObject.Properties.Name -contains 'mcpServers' -or $null -eq $existing.mcpServers) { $existing | Add-Member -MemberType NoteProperty -Name mcpServers -Value @{} }; $existing.mcpServers.LikeISaidMCP = $new.mcpServers.LikeISaidMCP; $existing | ConvertTo-Json -Depth 10 | Set-Content '%WINDSURF_CONFIG%'"
+    del "%TEMP%\windsurf_update.json" >nul 2>&1
+    echo [OK] Registered with Windsurf.
+) else (
+    echo Windsurf config not found. Creating new one...
+    mkdir "%USERPROFILE%\.windsurf" >nul 2>&1
+    echo {"mcpServers":{"LikeISaidMCP":{"command":"node","args":["%INSTALL_DIR_JSON%/server.js"],"env":{"MEMORY_FILE_PATH":"%INSTALL_DIR_JSON%/memory.json"}}}} > "%WINDSURF_CONFIG%"
+    echo [OK] Created Windsurf config.
+)
+goto :eof

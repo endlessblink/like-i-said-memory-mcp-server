@@ -4,10 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-// Use environment variable or default to current directory
+// Use environment variable if set, otherwise default to local memory.json
 const DB_FILE = process.env.MEMORY_FILE_PATH || path.join(__dirname, 'memory.json');
 
-// Ensure the directory exists
+// Ensure the directory for the DB file exists
 const dbDir = path.dirname(DB_FILE);
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
@@ -27,7 +27,6 @@ function readDB() {
     return {}; 
   }
 }
-
 function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
@@ -36,7 +35,6 @@ function sendResponse(id, result) {
   const response = { jsonrpc: "2.0", id, result };
   process.stdout.write(JSON.stringify(response) + '\n');
 }
-
 function sendError(id, code, message) {
   const response = { jsonrpc: "2.0", id, error: { code, message } };
   process.stdout.write(JSON.stringify(response) + '\n');
@@ -143,4 +141,16 @@ const rl = readline.createInterface({ input: process.stdin, output: process.stdo
 rl.on('line', (line) => {
   try {
     const msg = JSON.parse(line.trim());
-    if (!msg.method || typeof msg.id === 'undefined
+    if (!msg.method || typeof msg.id === 'undefined') {
+      sendError(msg.id || 0, -32600, "Invalid Request");
+      return;
+    }
+    if (handlers[msg.method]) {
+      handlers[msg.method](msg.id, msg.params);
+    } else {
+      sendError(msg.id, -32601, "Method not found");
+    }
+  } catch (e) {
+    sendError(0, -32700, "Parse error");
+  }
+});
