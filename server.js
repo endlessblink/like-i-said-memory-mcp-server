@@ -4,13 +4,30 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-const DB_FILE = path.join(__dirname, 'memory.json');
-if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, '{}');
+// Use environment variable or default to current directory
+const DB_FILE = process.env.MEMORY_FILE_PATH || path.join(__dirname, 'memory.json');
+
+// Ensure the directory exists
+const dbDir = path.dirname(DB_FILE);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+// Create empty DB file if it doesn't exist
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, '{}');
+  console.error(`Created new memory file at: ${DB_FILE}`);
+}
 
 function readDB() {
-  try { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
-  catch { return {}; }
+  try { 
+    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); 
+  }
+  catch { 
+    return {}; 
+  }
 }
+
 function writeDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
@@ -19,6 +36,7 @@ function sendResponse(id, result) {
   const response = { jsonrpc: "2.0", id, result };
   process.stdout.write(JSON.stringify(response) + '\n');
 }
+
 function sendError(id, code, message) {
   const response = { jsonrpc: "2.0", id, error: { code, message } };
   process.stdout.write(JSON.stringify(response) + '\n');
@@ -125,16 +143,4 @@ const rl = readline.createInterface({ input: process.stdin, output: process.stdo
 rl.on('line', (line) => {
   try {
     const msg = JSON.parse(line.trim());
-    if (!msg.method || typeof msg.id === 'undefined') {
-      sendError(msg.id || 0, -32600, "Invalid Request");
-      return;
-    }
-    if (handlers[msg.method]) {
-      handlers[msg.method](msg.id, msg.params);
-    } else {
-      sendError(msg.id, -32601, "Method not found");
-    }
-  } catch (e) {
-    sendError(0, -32700, "Parse error");
-  }
-});
+    if (!msg.method || typeof msg.id === 'undefined
