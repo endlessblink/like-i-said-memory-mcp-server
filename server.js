@@ -143,4 +143,20 @@ const rl = readline.createInterface({ input: process.stdin, output: process.stdo
 rl.on('line', (line) => {
   try {
     const msg = JSON.parse(line.trim());
-    if (!msg.method || typeof msg.id === 'undefined
+    if (!msg.method || typeof msg.id === 'undefined') {
+      console.error('Invalid message:', msg);
+      return;
+    }
+    
+    const handler = handlers[msg.method];
+    if (handler) {
+      handler(msg.id, msg.params);
+    } else {
+      sendError(msg.id, -32601, "Method not found");
+    }
+  } catch (e) {
+    console.error('Error handling message:', e);
+  }
+});
+
+console.error('Like I Said Memory MCP Server started successfully');
