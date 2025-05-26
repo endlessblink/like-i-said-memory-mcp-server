@@ -14,6 +14,34 @@ echo - SAFELY preserves existing MCP servers
 echo - Uses Node.js for reliable JSON handling
 echo - Works from any empty folder!
 echo.
+echo IMPORTANT: Windows users should avoid spaces in paths!
+echo Current path: %CD%
+echo.
+
+REM Check for spaces in current path
+echo %CD% | findstr " " >nul
+if %errorlevel% equ 0 (
+    echo.
+    echo ⚠️  WARNING: Current path contains SPACES!
+    echo    This may cause issues with Cursor on Windows.
+    echo.
+    echo    Recommended paths without spaces:
+    echo    - C:\MCP\
+    echo    - D:\Development\
+    echo    - C:\Users\%USERNAME%\mcp-servers\
+    echo.
+    echo    Continue anyway? Y/N
+    set /p continue_anyway="Your choice: "
+    if /i "!continue_anyway!" neq "Y" (
+        echo.
+        echo Installation cancelled. Please run from a path without spaces.
+        pause
+        exit /b 1
+    )
+    echo.
+    echo Continuing with installation...
+)
+
 echo Every step will be shown and confirmed.
 echo.
 pause

@@ -27,15 +27,25 @@ A powerful Model Context Protocol (MCP) server that provides persistent memory c
 
 ## 📦 Quick Installation
 
-### Prerequisites
-- **Node.js** (v14 or higher)
-- **Git** (for installation)
-- At least one supported AI assistant installed
+### ⚠️ IMPORTANT: Windows Path Requirements
+**For Windows users (especially Cursor):** The installation path **MUST NOT contain spaces**. Cursor has issues with folder paths containing spaces.
 
-### One-Command Install
-1. Download `install-mcp-memory-server.bat`
-2. Place it in any empty folder
-3. Run it:
+**✅ Good paths:**
+- `C:\MCP\like-i-said-mcp-server`
+- `D:\Development\like-i-said-mcp-server` 
+- `C:\Users\YourName\mcp-servers\like-i-said-mcp-server`
+
+**❌ Bad paths (will cause issues):**
+- `D:\MY PROJECTS\AI\LLM\...` (contains spaces)
+- `C:\Program Files\...` (contains spaces)
+- `C:\Users\Your Name\...` (contains spaces)
+
+### Option 1: One-Click Installer (Recommended)
+**Complete setup including dashboard:**
+1. Create a folder **without spaces** (e.g., `C:\MCP\`)
+2. Download `install-mcp-memory-server.bat` 
+3. Place it in your folder (e.g., `C:\MCP\install-mcp-memory-server.bat`)
+4. Run it:
 
 ```cmd
 install-mcp-memory-server.bat
@@ -47,6 +57,71 @@ The installer will:
 - ✅ Set up the web dashboard
 - ✅ Create your personal memory database
 - ✅ Preserve any existing MCP configurations
+
+### Option 2: Manual Installation
+If you prefer manual control or the installer doesn't work:
+
+#### Step 1: Download and Setup
+1. Create a folder **without spaces** (e.g., `C:\MCP\`)
+2. Clone or download the repository:
+```cmd
+cd C:\MCP
+git clone https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git
+cd Like-I-Said-memory-mcp-server
+npm install
+```
+
+#### Step 2: Manual Configuration
+
+**For Claude Desktop:**
+1. Open: `%APPDATA%\Claude\claude_desktop_config.json`
+2. Add this to the `mcpServers` section:
+```json
+{
+  "mcpServers": {
+    "like-i-said-memory": {
+      "command": "node",
+      "args": ["C:\\MCP\\Like-I-Said-memory-mcp-server\\server.js"]
+    }
+  }
+}
+```
+
+**For Cursor:**
+1. Open: `%USERPROFILE%\.cursor\mcp.json`
+2. Add this to the `mcpServers` section:
+```json
+{
+  "mcpServers": {
+    "like-i-said-memory": {
+      "command": "node",
+      "args": ["C:\\MCP\\Like-I-Said-memory-mcp-server\\server.js"]
+    }
+  }
+}
+```
+
+**For Windsurf:**
+1. Open: `%USERPROFILE%\.codeium\windsurf\mcp_config.json`
+2. Add this to the `mcpServers` section:
+```json
+{
+  "mcpServers": {
+    "like-i-said-memory": {
+      "command": "node",
+      "args": ["C:\\MCP\\Like-I-Said-memory-mcp-server\\server.js"]
+    }
+  }
+}
+```
+
+**Important:** Replace `C:\\MCP\\Like-I-Said-memory-mcp-server\\server.js` with your actual installation path (use double backslashes in JSON).
+
+#### Step 3: Test Installation
+1. Restart your AI assistant completely
+2. Test with: `Can you store "manual installation successful" in memory?`
+
+📖 **For detailed manual installation instructions, see: [INSTALLATION-GUIDE.md](./INSTALLATION-GUIDE.md)**
 
 ## 🎯 Usage
 
@@ -174,6 +249,13 @@ npm run preview     # Preview production build
 
 ### Common Issues
 
+**"No tools available" or "Failed to create client" in Cursor:**
+- 🚨 **MOST COMMON ISSUE**: Path contains spaces! Move to `C:\MCP\` or similar path without spaces
+- ✅ **Restart Cursor completely** - Close and reopen the application
+- ✅ **Verify server path** - Ensure the path in `mcp.json` is correct with double backslashes
+- ✅ **Test server manually**: `node C:\MCP\Like-I-Said-memory-mcp-server\server.js`
+- ✅ **Check JSON syntax** - Ensure no trailing commas or syntax errors
+
 **"Port already in use" error:**
 ```cmd
 npm run kill-servers
@@ -192,6 +274,15 @@ npm run kill-servers
 - Make sure both servers are running: `npm run dev:full`
 - Check for port conflicts: `npm run kill-servers`
 - Verify Node.js and npm are installed
+
+**Path with Spaces Issues (Windows):**
+```cmd
+# If you have spaces in your path, move the installation:
+# From: D:\MY PROJECTS\AI\... 
+# To:   C:\MCP\like-i-said-mcp-server\
+
+# Then update your config files with the new path
+```
 
 ### Getting Help
 - Check the troubleshooting section in `UPDATE-GUIDE.md`
