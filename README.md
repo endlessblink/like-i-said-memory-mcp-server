@@ -1,137 +1,246 @@
-# 🧠 Like I Said - MCP Memory Server
+# 🧠 Like-I-Said Memory MCP Server
 
-A **persistent memory system** for AI assistants (Claude, Cursor, Windsurf) with an easy-to-use web dashboard.
+A powerful Model Context Protocol (MCP) server that provides persistent memory capabilities for AI assistants like Claude Desktop, Cursor, and Windsurf, with an elegant web dashboard for memory management.
 
-## ✨ What This Does
+## ✨ Features
 
-- 🧠 **Remembers Everything**: Your AI assistant can store and recall information between conversations
-- 🌐 **Web Dashboard**: Manage memories through a beautiful web interface
-- ⚡ **One-Click Setup**: Automatically configures Claude Desktop, Cursor, and Windsurf
-- 🔄 **Real-Time Sync**: Changes in the dashboard instantly sync with your AI assistants
+### 🔧 MCP Server Capabilities
+- **Persistent Memory Storage** - Add, retrieve, update, and delete memories
+- **Context-Aware Storage** - Store memories with rich context and metadata
+- **Multi-Client Support** - Works with Claude Desktop, Cursor, and Windsurf
+- **JSON-Based Storage** - Simple, readable memory.json file
+- **Safe Configuration** - Preserves existing MCP server configurations
 
-## 🚀 Quick Start (New Users)
+### 🎨 Web Dashboard
+- **Modern React Interface** - Beautiful dark theme with violet accents
+- **Real-Time Statistics** - View memory counts, recent additions, and analytics
+- **Advanced Search & Filtering** - Find memories by content, tags, or metadata
+- **Tag-Based Organization** - Organize memories with custom tags
+- **Full CRUD Operations** - Create, read, update, and delete memories via UI
+- **Mobile Responsive** - Works on desktop and mobile devices
 
-### **Step 1: Install** 
-Download and run the installer:
-```
+### 🚀 Installation & Updates
+- **One-Click Installation** - Single batch file installs everything
+- **Smart Configuration** - Automatically detects and configures AI assistants
+- **Safe Updates** - Update system preserves all data and configurations
+- **Cross-Platform** - Works on Windows with Node.js
+
+## 📦 Quick Installation
+
+### Prerequisites
+- **Node.js** (v14 or higher)
+- **Git** (for installation)
+- At least one supported AI assistant installed
+
+### One-Command Install
+1. Download `install-mcp-memory-server.bat`
+2. Place it in any empty folder
+3. Run it:
+
+```cmd
 install-mcp-memory-server.bat
 ```
 
-**What it does:**
-- ✅ Downloads and installs the memory server
-- ✅ Configures Claude Desktop (if installed)  
-- ✅ Configures Cursor IDE (if installed)
-- ✅ Configures Windsurf IDE (if installed)
-- ✅ Creates your personal memory database
-- ✅ Tests that everything works
+The installer will:
+- ✅ Download and install the memory server
+- ✅ Configure Claude Desktop, Cursor, and/or Windsurf (your choice)
+- ✅ Set up the web dashboard
+- ✅ Create your personal memory database
+- ✅ Preserve any existing MCP configurations
 
-### **Step 2: Use Your AI Assistant**
-Open Claude Desktop, Cursor, or Windsurf and try:
-- "Remember that I prefer dark mode"
-- "What do you remember about my preferences?"
+## 🎯 Usage
 
-### **Step 3: Use the Web Dashboard** (Optional)
-```bash
-scripts/start-dashboard.bat
+### MCP Memory Functions
+After installation, these functions are available in your AI assistants:
+
+```javascript
+// Store a memory
+add_memory("project_idea", "Build a personal finance app with React", {
+  "tags": ["project", "react", "finance"],
+  "priority": "high"
+})
+
+// Retrieve a memory
+get_memory("project_idea")
+
+// List memories with prefix
+list_memories("project_")
+
+// Delete a memory
+delete_memory("project_idea")
 ```
-Then visit: **http://localhost:5173**
 
-## 🛠️ Memory Tools Your AI Can Use
+### Web Dashboard
+Start the dashboard to manage memories visually:
 
-Once installed, your AI assistants get these new abilities:
+```cmd
+cd your-installation-folder
+npm run dev:full
+```
 
-- **`add_memory`** - Store information: "Remember I live in New York"
-- **`get_memory`** - Recall specific info: "What city do I live in?"  
-- **`list_memories`** - Show all memories: "What do you remember about me?"
-- **`delete_memory`** - Remove outdated info: "Forget my old email address"
+Then open: **http://localhost:5173**
 
-## 🌐 Web Dashboard Features
+#### Dashboard Features:
+- 📊 **Dashboard Tab** - Statistics and recent memories overview
+- 📝 **Memories Tab** - Full table with search, filter, and management
+- ➕ **Add Memories** - Create new memories with tags and context
+- ✏️ **Edit/Delete** - Modify or remove existing memories
+- 🔍 **Search & Filter** - Find memories quickly by content or tags
 
-**Launch with:** `scripts/start-dashboard.bat` → http://localhost:5173
+## 🔄 Updates
 
-- 📋 **View all memories** in a searchable table
-- ➕ **Add memories** directly through the web interface
-- ✏️ **Edit memories** by clicking on them
-- 🗑️ **Delete memories** you no longer need
-- 🔍 **Search everything** by keyword or category
-- 🔄 **Real-time sync** with your AI assistants
+### For Existing Users
+Update to get new features while preserving all your data:
 
-## 📁 What Gets Installed
+```cmd
+# Download and run the updater:
+update-mcp-memory-server.bat
+```
+
+The updater will:
+- 🔍 Find your installation automatically
+- 💾 Backup your data safely
+- ⬇️ Download the latest version
+- 🔄 Preserve all memories and configurations
+- ✅ Install new features and improvements
+
+### Available Update Commands
+```cmd
+# Check current version
+npm run check-updates
+
+# Update everything
+npm run update
+
+# Stop running servers
+npm run kill-servers
+```
+
+## 📁 Project Structure
 
 ```
 like-i-said-mcp-server/
-├── install-mcp-memory-server.bat    # The installer you run (easy access!)
-├── scripts/
-│   ├── start-dashboard.bat          # Dashboard launcher
-│   └── quick-configure.bat          # Reconfigure AI assistants
-├── docs/
-│   └── DASHBOARD-GUIDE.md          # Dashboard usage guide
-├── memory.json                     # Your personal memory database
-├── server.js                      # The memory server program  
-├── dashboard-server.js            # Web dashboard backend
-├── src/                           # Web dashboard frontend
-└── package.json                   # Program dependencies
+├── 📄 server.js                     # Main MCP server
+├── 📄 dashboard-server.js           # Web dashboard API
+├── 📄 memory.json                   # Your memory storage
+├── 📄 package.json                  # Dependencies and scripts
+├── 🗂️ src/                          # React dashboard source
+│   ├── 📄 App.tsx                   # Main dashboard component
+│   └── 🗂️ components/              # UI components
+├── 🗂️ public/                       # Static assets
+├── 📄 install-mcp-memory-server.bat # One-click installer
+├── 📄 update-mcp-memory-server.bat  # Smart updater
+└── 📄 README.md                     # This file
 ```
 
-## 🔧 Advanced Commands
+## ⚙️ Configuration
 
-If you're comfortable with the command line:
+The installer automatically configures your AI assistants:
 
-```bash
-# Start just the web dashboard
+### Claude Desktop
+Location: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### Cursor
+Location: `%USERPROFILE%\.cursor\mcp.json`
+
+### Windsurf  
+Location: `%USERPROFILE%\.codeium\windsurf\mcp_config.json`
+
+All configurations add the `like-i-said-memory` server alongside your existing MCP servers.
+
+## 🛠️ Development
+
+### Start Development Environment
+```cmd
+# Start both API server and React dev server
 npm run dev:full
 
-# Reconfigure your AI assistants  
-npm run configure
-
-# Start only the memory server
-npm start
+# Or start individually:
+npm run dashboard  # API server (port 3001)
+npm run dev        # React dev server (port 5173)
 ```
 
-## 🆘 Troubleshooting
+### Available Scripts
+```cmd
+npm start           # Start MCP server only
+npm run dashboard   # Start dashboard API server
+npm run dev         # Start React development server
+npm run dev:full    # Start both dashboard and React dev server
+npm run build       # Build dashboard for production
+npm run preview     # Preview production build
+```
 
-### **"My AI assistant doesn't remember anything"**
-1. **Restart** your AI assistant (Claude/Cursor/Windsurf)
-2. Run `scripts/quick-configure.bat` to reconfigure
-3. Try saying: "Do you have access to memory tools?"
+## 🔧 Troubleshooting
 
-### **"Web dashboard won't load"**
-1. Run `scripts/start-dashboard.bat` again
-2. Wait 10 seconds, then go to http://localhost:5173
-3. Make sure no other programs are using ports 3001 or 5173
+### Common Issues
 
-### **"I want to start over"**
-1. Delete the `memory.json` file
-2. Run `install-mcp-memory-server.bat` again
+**"Port already in use" error:**
+```cmd
+npm run kill-servers
+```
 
-## 💾 Your Data
+**"Installation not found" during update:**
+- Run the updater from your installation directory
+- Or download fresh installer: `install-mcp-memory-server.bat`
 
-- **All memories are stored locally** on your computer
-- **Your data never leaves your machine** 
-- **Memories are saved in:** `memory.json` in the installation folder
-- **Safe to backup:** Just copy the `memory.json` file
+**MCP functions not available:**
+- Restart your AI assistant (Claude Desktop, Cursor, or Windsurf)
+- Check that the server path in configs is correct
+- Verify the MCP server is running: `npm start`
+
+**Dashboard won't load:**
+- Make sure both servers are running: `npm run dev:full`
+- Check for port conflicts: `npm run kill-servers`
+- Verify Node.js and npm are installed
+
+### Getting Help
+- Check the troubleshooting section in `UPDATE-GUIDE.md`
+- Create an issue on GitHub with your error message
+- Include your operating system and Node.js version
 
 ## 📋 Requirements
 
-- **Windows computer**
-- **Node.js** (the installer will help you get this)
-- **One of these AI assistants:**
-  - Claude Desktop
-  - Cursor IDE  
-  - Windsurf IDE
+- **Windows** (tested on Windows 10/11)
+- **Node.js** v14 or higher
+- **Git** (for installation and updates)
+- **Claude Desktop** and/or **Cursor** and/or **Windsurf**
 
-## 🎉 You're All Set!
+## 🔐 Security & Privacy
 
-1. **Run the installer** → `install-mcp-memory-server.bat`
-2. **Open your AI assistant** and ask it to remember something
-3. **Use the web dashboard** → `scripts/start-dashboard.bat` for visual memory management
+- **Local Storage** - All memories stored locally in `memory.json`
+- **No Cloud Sync** - Data never leaves your machine
+- **Config Safety** - Installer preserves existing MCP configurations
+- **Open Source** - Full source code available for review
 
-**Your AI assistant now has a perfect memory!** 🧠✨
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 🎉 Changelog
+
+### v2.0.0 (Latest)
+- 🎨 **New React Dashboard** - Modern UI with dark theme
+- 🔍 **Advanced Search** - Filter memories by content, tags, context
+- 🏷️ **Tag System** - Organize memories with custom tags
+- 📊 **Statistics** - View memory analytics and recent activity
+- 🛡️ **Safe Updates** - Smart updater preserves all data
+- ⚡ **Performance** - Faster memory operations and UI
+- 🔧 **Better Config** - Improved MCP configuration handling
+
+### v1.0.0
+- 🚀 **Initial Release** - Basic MCP server with memory functions
+- 📦 **Auto-Installer** - One-click setup for all AI assistants
+- 💾 **Persistent Storage** - JSON-based memory system
 
 ---
 
-## 🔗 Need Help?
-
-- 📖 **Dashboard Guide**: See `docs/DASHBOARD-GUIDE.md` for detailed web interface instructions
-- 🐛 **Issues**: Check the troubleshooting section above
-- 💡 **Tips**: The web dashboard is great for managing lots of memories at once
+**Made with ❤️ for the AI community**

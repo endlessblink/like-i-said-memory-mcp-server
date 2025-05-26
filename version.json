@@ -1,0 +1,28 @@
+{
+  "name": "like-i-said-mcp-server",
+  "version": "2.0.0",
+  "dashboard_version": "2.0.0",
+  "mcp_version": "2.0.0",
+  "last_updated": "2025-05-26",
+  "changelog": {
+    "2.0.0": {
+      "date": "2025-05-26",
+      "features": [
+        "Enhanced React dashboard with dark theme",
+        "Advanced search and filtering",
+        "Tag-based memory organization", 
+        "Real-time stats and analytics",
+        "Improved memory management UI",
+        "Better error handling and validation"
+      ],
+      "fixes": [
+        "Fixed favicon loading issues",
+        "Resolved CSP security warnings",
+        "Improved JSON config handling",
+        "Better cross-platform compatibility"
+      ]
+    }
+  },
+  "update_url": "https://github.com/endlessblink/Like-I-Said-memory-mcp-server.git",
+  "check_update_url": "https://api.github.com/repos/endlessblink/Like-I-Said-memory-mcp-server/releases/latest"
+}

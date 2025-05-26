@@ -1,15 +1,19 @@
 @echo off
 setlocal enabledelayedexpansion
-title MCP Memory Server - Auto Installer
+title MCP Memory Server - Auto Installer (Single File)
 
 echo ================================================
-echo        MCP Memory Server - Auto Installer
+echo    MCP Memory Server - Auto Installer v2.0
 echo ================================================
 echo.
-echo This installer will set up the MCP Memory Server for you:
+echo This installer is completely self-contained:
 echo - Downloads and installs the memory server
 echo - Configures it for Claude Desktop, Cursor, and Windsurf
 echo - Creates your personal memory database
+echo - SAFELY preserves existing MCP servers
+echo - Uses Node.js for reliable JSON handling
+echo - Works from any empty folder!
+echo.
 echo Every step will be shown and confirmed.
 echo.
 pause
@@ -26,33 +30,33 @@ echo NPM install result: %errorlevel%
 echo {} > memory.json
 echo Memory file created: %errorlevel%
 
-echo ✅ Installation complete!
+echo Installation complete!
 echo.
 
 echo Step 2: Detecting AI assistants...
 echo.
 
+REM Correct detection paths
 if exist "%APPDATA%\Claude" (
-    echo ✅ Claude Desktop found
+    echo Claude Desktop found
     set "CLAUDE_AVAILABLE=1"
 ) else (
-    echo ⚪ Claude Desktop not found
+    echo Claude Desktop not found
     set "CLAUDE_AVAILABLE=0"
 )
-
-if exist "%APPDATA%\Cursor" (
-    echo ✅ Cursor found
+if exist "%USERPROFILE%\.cursor" (
+    echo Cursor found
     set "CURSOR_AVAILABLE=1"
 ) else (
-    echo ⚪ Cursor not found
+    echo Cursor not found
     set "CURSOR_AVAILABLE=0"
 )
 
-if exist "%APPDATA%\Windsurf" (
-    echo ✅ Windsurf found
+if exist "%USERPROFILE%\.codeium\windsurf" (
+    echo Windsurf found
     set "WINDSURF_AVAILABLE=1"
 ) else (
-    echo ⚪ Windsurf not found
+    echo Windsurf not found
     set "WINDSURF_AVAILABLE=0"
 )
 
@@ -82,120 +86,151 @@ if "!WINDSURF_AVAILABLE!"=="1" (
 )
 
 echo.
-echo Step 4: Creating configurations...
+echo Step 4: Creating embedded config updater...
 echo.
 
 set "SERVER_PATH=%CD%\server.js"
 echo Server path: !SERVER_PATH!
-
-REM Configure Claude Desktop
+echo.
+REM Create embedded Node.js config updater
+echo Creating safe config updater...
+(
+echo const fs = require('fs'^);
+echo const path = require('path'^);
+echo.
+echo class SafeConfigUpdater {
+echo     constructor(^) {
+echo         this.configPaths = {
+echo             claude: path.join(process.env.APPDATA, 'Claude', 'claude_desktop_config.json'^),
+echo             cursor: path.join(process.env.USERPROFILE, '.cursor', 'mcp.json'^),
+echo             windsurf: path.join(process.env.USERPROFILE, '.codeium', 'windsurf', 'mcp_config.json'^)
+echo         };
+echo     }
+echo.
+echo     readConfig(configPath^) {
+echo         try {
+echo             if (^^!fs.existsSync(configPath^)^) {
+echo                 return { mcpServers: {} };
+echo             }
+echo             const content = fs.readFileSync(configPath, 'utf8'^);
+echo             if (^^!content.trim(^)^) {
+echo                 return { mcpServers: {} };
+echo             }
+echo             const parsed = JSON.parse(content^);
+echo             if (^^!parsed.mcpServers^) {
+echo                 parsed.mcpServers = {};
+echo             }
+echo             return parsed;
+echo         } catch (error^) {
+echo             console.error('Error reading config:', error.message^);
+echo             return null;
+echo         }
+echo     }
+echo.
+echo     writeConfig(configPath, config^) {
+echo         try {
+echo             const dir = path.dirname(configPath^);
+echo             if (^^!fs.existsSync(dir^)^) {
+echo                 fs.mkdirSync(dir, { recursive: true }^);
+echo             }
+echo             const jsonString = JSON.stringify(config, null, 2^);
+echo             JSON.parse(jsonString^);
+echo             const tempPath = configPath + '.tmp';
+echo             fs.writeFileSync(tempPath, jsonString, 'utf8'^);
+echo             fs.renameSync(tempPath, configPath^);
+echo             return true;
+echo         } catch (error^) {
+echo             console.error('Error writing config:', error.message^);
+echo             return false;
+echo         }
+echo     }
+echo.
+echo     addMemoryServer(client, serverPath^) {
+echo         const configPath = this.configPaths[client];
+echo         if (^^!configPath^) {
+echo             console.error('Unknown client:', client^);
+echo             return false;
+echo         }
+echo         console.log('Configuring ' + client + '...'^);
+echo         const config = this.readConfig(configPath^);
+echo         if (^^!config^) {
+echo             console.error('Failed to read ' + client + ' config'^);
+echo             return false;
+echo         }
+echo         if (config.mcpServers['like-i-said-memory']^) {
+echo             console.log('SKIP: Server already exists in ' + client^);
+echo             return true;
+echo         }
+echo         config.mcpServers['like-i-said-memory'] = {
+echo             command: 'node',
+echo             args: [serverPath]
+echo         };
+echo         if (this.writeConfig(configPath, config^)^) {
+echo             console.log('SUCCESS: Added server to ' + client^);
+echo             return true;
+echo         } else {
+echo             console.error('FAILED: Could not update ' + client + ' config'^);
+echo             return false;
+echo         }
+echo     }
+echo }
+echo.
+echo const args = process.argv.slice(2^);
+echo if (args.length ^< 2^) {
+echo     console.error('Usage: node updater.js ^<client^> ^<server-path^>'^);
+echo     process.exit(1^);
+echo }
+echo const [client, serverPath] = args;
+echo const updater = new SafeConfigUpdater(^);
+echo const success = updater.addMemoryServer(client, serverPath^);
+echo process.exit(success ? 0 : 1^);
+) > temp-updater.js
+REM Configure using the embedded Node.js updater
 if /i "!claude_config!"=="Y" (
-    echo Configuring Claude Desktop...
-    
-    echo Creating directory if needed...
-    if not exist "%APPDATA%\Claude" mkdir "%APPDATA%\Claude"
-    
-    echo Writing config file...
-    (
-    echo {
-    echo   "mcpServers": {
-    echo     "like-i-said-memory": {
-    echo       "command": "node",
-    echo       "args": ["!SERVER_PATH:\=\\!"]
-    echo     }
-    echo   }
-    echo }
-    ) > "%APPDATA%\Claude\claude_desktop_config.json"
-    
-    if exist "%APPDATA%\Claude\claude_desktop_config.json" (
-        echo ✅ Claude Desktop config created successfully!
-    ) else (
-        echo ❌ Failed to create Claude Desktop config
-    )
+    echo Configuring Claude Desktop safely...
+    node temp-updater.js claude "!SERVER_PATH!"
 )
 
-REM Configure Cursor
 if /i "!cursor_config!"=="Y" (
-    echo Configuring Cursor...
-    
-    echo Creating directory if needed...
-    if not exist "%APPDATA%\Cursor\User\globalStorage\cursor.mcp" (
-        mkdir "%APPDATA%\Cursor\User\globalStorage\cursor.mcp"
-    )
-    
-    echo Writing config file...
-    (
-    echo {
-    echo   "mcpServers": {
-    echo     "like-i-said-memory": {
-    echo       "command": "node",
-    echo       "args": ["!SERVER_PATH:\=\\!"]
-    echo     }
-    echo   }
-    echo }
-    ) > "%APPDATA%\Cursor\User\globalStorage\cursor.mcp\claude_desktop_config.json"
-    
-    if exist "%APPDATA%\Cursor\User\globalStorage\cursor.mcp\claude_desktop_config.json" (
-        echo ✅ Cursor config created successfully!
-    ) else (
-        echo ❌ Failed to create Cursor config
-    )
+    echo Configuring Cursor safely...
+    node temp-updater.js cursor "!SERVER_PATH!"
 )
 
-REM Configure Windsurf
 if /i "!windsurf_config!"=="Y" (
-    echo Configuring Windsurf...
-    
-    echo Creating directory if needed...
-    if not exist "%APPDATA%\Windsurf\User\globalStorage\windsurf.mcp" (
-        mkdir "%APPDATA%\Windsurf\User\globalStorage\windsurf.mcp"
-    )
-    
-    echo Writing config file...
-    (
-    echo {
-    echo   "mcpServers": {
-    echo     "like-i-said-memory": {
-    echo       "command": "node",
-    echo       "args": ["!SERVER_PATH:\=\\!"]
-    echo     }
-    echo   }
-    echo }
-    ) > "%APPDATA%\Windsurf\User\globalStorage\windsurf.mcp\claude_desktop_config.json"
-    
-    if exist "%APPDATA%\Windsurf\User\globalStorage\windsurf.mcp\claude_desktop_config.json" (
-        echo ✅ Windsurf config created successfully!
-    ) else (
-        echo ❌ Failed to create Windsurf config
-    )
+    echo Configuring Windsurf safely...
+    node temp-updater.js windsurf "!SERVER_PATH!"
 )
 
 echo.
+echo Cleaning up...
+del "temp-updater.js" >nul 2>&1
+
+echo.
 echo ================================================
-echo                🎉 SUCCESS! 🎉
+echo                SUCCESS!
 echo ================================================
 echo.
-echo ✅ MCP Memory Server installed and configured!
-echo 📍 Server: !SERVER_PATH!
-echo 📍 Memory: %CD%\memory.json
+echo MCP Memory Server installed and configured SAFELY!
+echo Server: !SERVER_PATH!
+echo Memory: %CD%\memory.json
 echo.
-echo 📋 Configuration Summary:
-if /i "!claude_config!"=="Y" echo    ✅ Claude Desktop configured
-if /i "!cursor_config!"=="Y" echo    ✅ Cursor configured  
-if /i "!windsurf_config!"=="Y" echo    ✅ Windsurf configured
+echo Configuration Summary:
+if /i "!claude_config!"=="Y" echo    Claude Desktop processed
+if /i "!cursor_config!"=="Y" echo    Cursor processed  
+if /i "!windsurf_config!"=="Y" echo    Windsurf processed
 echo.
-echo ⚠️  CRITICAL: RESTART your AI assistants now!
-if /i "!claude_config!"=="Y" echo    • Close and restart Claude Desktop
-if /i "!cursor_config!"=="Y" echo    • Close and restart Cursor
-if /i "!windsurf_config!"=="Y" echo    • Close and restart Windsurf
+echo CRITICAL: RESTART your AI assistants now!
+if /i "!claude_config!"=="Y" echo    * Close and restart Claude Desktop
+if /i "!cursor_config!"=="Y" echo    * Close and restart Cursor
+if /i "!windsurf_config!"=="Y" echo    * Close and restart Windsurf
 echo.
-echo 🚀 Memory tools available after restart:
-echo    • add_memory(key, value, context?)
-echo    • get_memory(key)
-echo    • list_memories(prefix?)
-echo    • delete_memory(key)
+echo Memory tools available after restart:
+echo    * add_memory(key, value, context?)
+echo    * get_memory(key)
+echo    * list_memories(prefix?)
+echo    * delete_memory(key)
 echo.
-echo ✨ Installation complete! This window stays open.
+echo Installation complete! This window stays open.
 echo.
 echo Press any key to exit...
 pause >nul
