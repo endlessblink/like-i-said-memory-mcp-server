@@ -2,6 +2,9 @@
 
 A powerful Model Context Protocol (MCP) server that provides persistent memory capabilities for AI assistants like Claude Desktop, Cursor, and Windsurf, with an elegant web dashboard for memory management.
 
+<img src="images/Like_I_Said_cover.png" width="600" alt="Like_I_Said_Cover">
+
+
 ## ✨ Features
 
 ### 🔧 MCP Server Capabilities
